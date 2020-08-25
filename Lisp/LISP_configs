@@ -1,0 +1,238 @@
+
+R1
+
+hostname R1
+
+router isis
+net 49.0001.1111.1111.1111.00
+
+int e 0/0
+ip add 	10.10.10.2 255.255.255.252
+ip router isis
+no shut
+
+int lo 0
+ip add 1.1.1.1 255.0.0.0
+ip router isis
+no shut
+
+int e 0/1
+ip add 172.16.1.1 255.255.255.0
+no shut
+
+int e 0/2
+ip add 172.16.2.1 255.255.255.0
+shut
+
+
+router lisp
+locator-set site-1
+
+ipv4-interface loopback 0 priority 10 weight 10
+exit
+
+dynamic-eid 172-16-1-0
+database-mapping 172.16.1.0/24 locator-set site-1
+
+dynamic-eid 172-16-2-0
+database-mapping 172.16.2.0/24 locator-set site-1
+
+dynamic-eid 172-16-3-0
+database-mapping 172.16.3.0/24 locator-set site-1
+
+
+ipv4 itr
+ipv4 etr
+
+ipv4 itr map-resolver 4.4.4.4
+ipv4 etr map-server 4.4.4.4 key cisco
+
+int e 0/1
+lisp mobility 172-16-1-0
+no shut
+
+int e 0/2
+lisp mobility 172-16-2-0
+shut
+
+R2
+
+hostname R2
+
+router isis
+net 49.0001.2222.2222.2222.00
+
+int e 0/0
+ip add 	10.10.10.6 255.255.255.252
+ip router isis
+no shut
+
+int lo 0
+ip add 2.2.2.2 255.0.0.0
+ip router isis
+no shut
+
+wr mem
+
+int e 0/1
+ip add 172.16.2.1 255.255.255.0
+no shut
+
+int e 0/2
+ip add 172.16.1.1 255.255.255.0
+shut
+
+router lisp
+locator-set site-2
+
+ipv4-interface loopback 0 priority 10 weight 10
+exit
+
+dynamic-eid 172-16-1-0
+database-mapping 172.16.1.0/24 locator-set site-2
+
+dynamic-eid 172-16-2-0
+database-mapping 172.16.2.0/24 locator-set site-2
+
+dynamic-eid 172-16-3-0
+database-mapping 172.16.3.0/24 locator-set site-2
+
+
+ipv4 itr
+ipv4 etr
+
+ipv4 itr map-resolver 4.4.4.4
+ipv4 etr map-server 4.4.4.4 key cisco
+
+int e 0/1
+lisp mobility 172-16-2-0
+no shut
+
+int e 0/2
+lisp mobility 172-16-1-0
+shut
+
+
+R3
+
+hostname R3
+
+router isis
+net 49.0001.3333.3333.3333.00
+
+int e 0/0
+ip add 	10.10.10.10 255.255.255.252
+ip router isis
+no shut
+
+int lo 0
+ip add 3.3.3.3 255.0.0.0
+ip router isis
+no shut
+
+wr mem
+
+int e 0/1
+ip add 172.16.3.1 255.255.255.0
+no shut
+
+int e 0/2
+ip add 172.16.2.1 255.255.255.0
+shut
+
+
+
+router lisp
+locator-set site-3
+
+ipv4-interface loopback 0 priority 10 weight 10
+exit
+
+dynamic-eid 172-16-1-0
+database-mapping 172.16.1.0/24 locator-set site-3
+
+dynamic-eid 172-16-2-0
+database-mapping 172.16.2.0/24 locator-set site-3
+
+dynamic-eid 172-16-3-0
+database-mapping 172.16.3.0/24 locator-set site-3
+
+
+ipv4 itr
+ipv4 etr
+
+ipv4 itr map-resolver 4.4.4.4
+ipv4 etr map-server 4.4.4.4 key cisco
+
+int e 0/1
+lisp mobility 172-16-3-0
+no shut
+
+int e 0/2
+lisp mobility 172-16-2-0
+shut
+
+R4
+
+hostname R4
+
+router isis
+net 49.0001.4444.4444.4444.00
+
+int e 0/0
+ip add 	10.10.10.14 255.255.255.252
+ip router isis
+no shut
+
+int lo 0
+ip add 4.4.4.4 255.0.0.0
+ip router isis
+no shut
+
+wr mem
+
+
+router lisp
+site campus
+
+authentication-key cisco
+eid-prefix 172.16.1.0/24 accept-more-specifics
+eid-prefix 172.16.2.0/24 accept-more-specifics
+eid-prefix 172.16.3.0/24 accept-more-specifics
+
+
+
+ipv4 map-server
+ipv4 map-resolver
+
+R5
+
+hostname R5
+
+router isis
+net 49.0001.5555.5555.5555.00
+
+int e 0/0
+ip add 	10.10.10.1 255.255.255.252
+ip router isis
+no shut
+
+int e 0/2
+ip add 	10.10.10.5 255.255.255.252
+ip router isis
+no shut
+
+int e 0/1
+ip add 	10.10.10.9 255.255.255.252
+ip router isis
+no shut
+
+int e 0/3
+ip add 	10.10.10.13 255.255.255.252
+ip router isis
+no shut
+
+int lo 0
+ip add 5.5.5.5 255.0.0.0
+ip router isis
+no shut
