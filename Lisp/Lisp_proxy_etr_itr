@@ -40,33 +40,20 @@ ip route 4.4.4.4 255.255.255.255 10.1.23.3
 ip route 6.6.6.6 255.255.255.255 10.1.23.3
 
 router lisp
- eid-table default instance-id 0
-  exit
- !
- ipv4 itr map-resolver 3.3.3.3
- ipv4 itr
- ipv4 etr map-server 3.3.3.3 key cisco
- ipv4 etr
-
- int e 0/1
- ip lisp source-locator lo 0
-
- -----------
-router lisp
-locator-set xTR2
-ipv4-interface lo0 priority 1 weight 50
 eid-table default instance-id 0
-dynamic-eid 1.1.1.0/24_EID
-database-mapping 1.1.1.0/24 locator-set xTR2
+database-mapping 1.1.1.0/24 2.2.2.2 priority 1 weigh 50
 
 
-int e 0/0
-lisp mobility 1.1.1.0/24_EID
+ipv4 itr map-resolver 3.3.3.3
+ipv4 itr
+ipv4 etr map-server 3.3.3.3 key cisco
+ipv4 etr
 
+int e 0/1
+ip lisp source-locator lo 0
 
-
-
-
+router lisp
+ipv4 use-petr 6.6.6.6
 
 
 R3
@@ -107,14 +94,6 @@ interface Ethernet0/2
 ip address 10.1.36.3 255.255.255.0
 no shut
 
- -----------
-router lisp
-site SITE_A
-eid-prefix 1.1.1.0/24 accept-more-specifics
-
-
-site SITE_B
-eid-prefix 5.5.5.0/24 accept-more-specifics
 
 R4
 
@@ -128,12 +107,8 @@ int e 0/1
 ip add 10.1.45.4 255.255.255.0
 no shut
 
-
-
-
 router ospf 1
 network 10.1.45.0 0.0.0.255 area 0
-
 
 int e 0/0
 ip add 10.1.34.4 255.255.255.0
@@ -144,32 +119,21 @@ ip route 3.3.3.3 255.255.255.255 10.1.34.3
 ip route 6.6.6.6 255.255.255.255 10.1.34.3
 
 router lisp
- eid-table default instance-id 0
-  exit
- !
- ipv4 itr map-resolver 3.3.3.3
- ipv4 itr
- ipv4 etr map-server 3.3.3.3 key cisco
- ipv4 etr
- exit
+eid-table default instance-id 0
+database-mapping 5.5.5.0/24 4.4.4.4 priority 1 weigh 50
+exit
+
+ipv4 itr map-resolver 3.3.3.3
+ipv4 itr
+ipv4 etr map-server 3.3.3.3 key cisco
+ipv4 etr
+
 
 int e 0/0
 ip lisp source-locator lo 0
 
- -----------
 router lisp
-locator-set xTR4
-ipv4-interface lo0 priority 1 weight 50
-eid-table default instance-id 0
-dynamic-eid 5.5.5.0/24_EID
-database-mapping 5.5.5.0/24 locator-set xTR4
-
-
-int e 0/1
-lisp mobility 5.5.5.0/24_EID
-
-
-
+ipv4 use-petr 6.6.6.6
 
 
 R5
@@ -196,69 +160,86 @@ R6
 
 host xTR6
 
+interface Ethernet0/0
+ip address 10.1.36.6 255.255.255.0
+no shut
+
+interface Ethernet0/1
+ip address 10.1.67.6 255.255.255.0
+no shut
+
 int lo 0
 ip add 6.6.6.6 255.255.255.255
 no shut
-
-
-int e 0/0
-ip add 10.1.36.6 255.255.255.0
-no shut
-
-int e 0/1
-ip add 10.1.67.6 255.255.255.0
-no shut
-
-router ospf 1
-network 10.1.36.0 0.0.0.255 area 0
-network 10.1.67.0 0.0.0.255 area 0
-
 
 ip route 2.2.2.2 255.255.255.255 10.1.36.3
 ip route 3.3.3.3 255.255.255.255 10.1.36.3
 ip route 4.4.4.4 255.255.255.255 10.1.36.3
 
+
+#####LISp-to-NON-lisp####
+
 router lisp
  eid-table default instance-id 0
-  exit
  !
  ipv4 itr map-resolver 3.3.3.3
- ipv4 itr
- ipv4 etr map-server 3.3.3.3 key cisco
- ipv4 etr
- exit
+  ipv4 itr
+  ipv4 etr map-server 3.3.3.3 key cisco
+  ipv4 etr
 
-int e 0/0
-ip lisp source-locator lo 0
+ipv4 proxy-etr
 
- -----------
+
+#####Non-LISP-to-lisp####
+
 router lisp
-locator-set xTR6
-ipv4-interface lo0 priority 1 weight 50
-eid-table default instance-id 0
-dynamic-eid 1.1.1.0/24_EID
-database-mapping 1.1.1.0/24 locator-set xTR6
+ eid-table default instance-id 0
+  map-cache 0.0.0.0/0 map-request
+ !
+ ipv4 itr map-resolver 3.3.3.3
+  no ipv4 itr
+  ipv4 etr map-server 3.3.3.3 key cisco
+  ipv4 etr
+
+ipv4 proxy-etr
+ipv4 proxy-itr 6.6.6.6
+ #####
 
 
-int e 0/1
-lisp mobility 1.1.1.0/24_EID
+ router ospf 1
+ network 10.1.67.0 0.0.0.255 area 0
+ redistribute static
+ redistribute connected
+
 
 
 R7
 
 host R7
 
-int lo 0
-ip add 1.1.1.1 255.255.255.0
-ip ospf network point-to-point
+interface Ethernet0/0
+ip address 10.1.67.7 255.255.255.0
+ip nat inside
 no shut
 
-int e 0/0
-ip add 10.1.67.7 255.255.255.0
+interface Ethernet0/1
+ip address 10.64.66.171 255.255.255.0
+ip nat outside
 no shut
+
+ip access-list extended INTERNET
+ deny   ip any 10.0.0.0 0.255.255.255
+ deny   ip any 172.16.0.0 0.15.255.255
+ deny   ip any 192.168.0.0 0.0.255.255
+ permit ip any any
+
+ip nat inside source list INTERNET interface Ethernet0/1 overload
+
+ip route 0.0.0.0 0.0.0.0 10.64.66.1
+ip route 1.1.1.0 255.255.255.0 10.1.67.6
+ip route 5.5.5.0 255.255.255.0 10.1.67.6
+
 
 router ospf 1
 network 10.1.67.0 0.0.0.255 area 0
-network 1.1.1.0 0.0.0.255 area 0
-
-ip route 0.0.0.0 0.0.0.0 10.1.67.6
+default-information originate
